@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Test artifacts (locally generated; NOT committed)
+reports/
+screenshots/
+logs/
+*.log
+last_run.log
+allure-results/
+allure-report/
+
+# Documentation artifacts that get re-generated
+*.html
+!docs/**/*.html
+
+# Backup / temp
+*.bak
+*.orig
+*.tmp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
