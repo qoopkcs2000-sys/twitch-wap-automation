@@ -6,7 +6,7 @@ description: Use this skill when building or debugging a Selenium + pytest frame
 # Selenium + pytest Mobile Web Automation
 
 Lessons captured while building the Twitch WAP automation framework
-(`F:\twich_test`). Apply this skill whenever you start, extend, or
+(`f:\twitch-wap-automation`). Apply this skill whenever you start, extend, or
 troubleshoot a similar mobile-web Selenium project in Python.
 
 ## When to use
@@ -276,7 +276,7 @@ flaky locator.
 
 ## Reference implementation
 
-See `F:\twich_test`. Key files:
+See `f:\twitch-wap-automation`. Key files:
 - `utils/driver_factory.py` — Chrome options + device profiles
 - `pages/base_page.py` — shared element helpers
 - `pages/home_page.py` — "Open in App" dismissal + fallback search icons

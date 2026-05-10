@@ -59,6 +59,24 @@ twitch-wap-automation/
   anything was clicked. This satisfies the *Recursivity* requirement.
 - **Failure screenshots** are taken automatically by the conftest hook so
   CI runs always have visual evidence.
+- **Resilient locators** use fallback lists to survive minor UI changes.
+
+## Technical Highlights
+
+### 1. Mobile Emulation via CDP
+Instead of the legacy `mobileEmulation` capability, this framework uses **Chrome DevTools Protocol (CDP)** to set device metrics and user agents. This ensures the site treats the session as a true mobile device, preventing hybrid UI issues common in automation.
+
+### 2. Recursive Popup Handling
+Chained overlays (e.g., Cookie Banner -> Age Gate -> Ad) are handled via a recursive dismissal strategy with a depth cap. This ensures the UI is clear before interacting with the main content.
+
+### 3. Resilient Locator Strategy
+Page Objects use a list of fallback locators for critical elements. If the primary CSS selector fails, the framework automatically tries alternatives (ARIA labels, data attributes, XPaths) before falling back to direct navigation or throwing an error.
+
+### 4. Automatic Failure Artifacts
+The `conftest.py` hook automatically captures:
+- **Screenshots**: Saved to `screenshots/FAILED_<test_name>.png`.
+- **HTML Report**: Detailed execution logs and status.
+- **GIF Recording**: Optional visual replay of the entire flow.
 
 ## Requirements
 
@@ -72,7 +90,7 @@ twitch-wap-automation/
 ```bash
 # 1. Clone
 git clone <your-repo-url>
-cd twich_test
+cd twitch-wap-automation
 
 # 2. Virtual environment (recommended)
 python -m venv .venv
@@ -127,7 +145,15 @@ After a run you'll find:
 
 ![Test run demo](docs/demo.gif)
 
-> Replace `docs/demo.gif` with a recorded run before submitting.
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| `cannot parse capability: goog:chromeOptions` | Deprecated Chrome options | Remove `useAutomationExtension` and `excludeSwitches` in `driver_factory.py`. |
+| `TimeoutException` on search icon | "Open in App" overlay blocked the view | Handled in `HomePage.load()`; check if Twitch changed the overlay DOM. |
+| `ElementClickInterceptedException` | Cookie banner or mature gate appeared | Ensure `dismiss_popups()` is called before the interaction. |
+| Driver won't start after Chrome update | Cache mismatch in `webdriver-manager` | The framework uses Selenium Manager (v4.6+) which handles this automatically. |
+| Empty search results | Twitch changed the input `type` | Check the fallback locators in `home_page.py`. |
 
 ## Extending the framework
 
