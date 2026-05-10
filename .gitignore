@@ -28,6 +28,7 @@ htmlcov/
 reports/
 screenshots/
 logs/
+recordings/
 *.log
 last_run.log
 allure-results/
