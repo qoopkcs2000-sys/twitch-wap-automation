@@ -38,12 +38,13 @@ class Settings:
 
     # --- Filesystem paths --------------------------------------------------
     PROJECT_ROOT: Path = Path(__file__).resolve().parent.parent
-    SCREENSHOTS_DIR: Path = PROJECT_ROOT / "screenshots"
-    REPORTS_DIR: Path = PROJECT_ROOT / "reports"
-    LOGS_DIR: Path = PROJECT_ROOT / "logs"
+    SCREENSHOTS_DIR: Path = PROJECT_ROOT.parent / "screenshots"
+    REPORTS_DIR: Path = PROJECT_ROOT.parent / "reports"
+    LOGS_DIR: Path = PROJECT_ROOT.parent / "logs"
+    RECORDINGS_DIR: Path = PROJECT_ROOT.parent / "recordings"
 
     @classmethod
     def ensure_dirs(cls) -> None:
         """Create runtime directories if missing."""
-        for path in (cls.SCREENSHOTS_DIR, cls.REPORTS_DIR, cls.LOGS_DIR):
+        for path in (cls.SCREENSHOTS_DIR, cls.REPORTS_DIR, cls.LOGS_DIR, cls.RECORDINGS_DIR):
             path.mkdir(parents=True, exist_ok=True)

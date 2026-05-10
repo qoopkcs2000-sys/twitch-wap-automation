@@ -14,8 +14,19 @@ import pytest
 from config.settings import Settings
 from utils.driver_factory import DriverFactory
 from utils.logger import get_logger
+from utils.recorder import VideoRecorder
 
 logger = get_logger("conftest")
+
+
+def pytest_addoption(parser):
+    """Add custom command line arguments."""
+    parser.addoption(
+        "--record",
+        action="store_true",
+        default=False,
+        help="Record the test run as a GIF."
+    )
 
 
 @pytest.fixture(scope="function")
@@ -23,7 +34,21 @@ def driver(request):
     """Fresh browser per test for full isolation."""
     Settings.ensure_dirs()
     driver = DriverFactory.create()
+    
+    # Initialize recorder if flag is set
+    recorder = None
+    if request.config.getoption("--record"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        name = request.node.name
+        record_path = Settings.RECORDINGS_DIR / f"{name}_{timestamp}.gif"
+        recorder = VideoRecorder(driver, record_path)
+        recorder.start()
+
     yield driver
+
+    # Stop recording if active
+    if recorder:
+        recorder.stop()
 
     # Capture a screenshot on failure (the hook below sets ``rep_call``).
     rep = getattr(request.node, "rep_call", None)

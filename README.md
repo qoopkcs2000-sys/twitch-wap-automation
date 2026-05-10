@@ -17,7 +17,7 @@ Runs against Twitch's mobile web (WAP) using Chrome's mobile emulator.
 ## Project structure
 
 ```
-twich_test/
+twitch-wap-automation/
 ├── source/                      # production code (made importable via
 │   │                              `pythonpath = source` in pytest.ini)
 │   ├── config/
@@ -29,12 +29,15 @@ twich_test/
 │   │   └── streamer_page.py     # Recursive popup dismisser lives here
 │   ├── utils/
 │   │   ├── driver_factory.py    # Builds Chrome with mobile emulation
-│   │   └── logger.py            # Console + rotating-file logging
+│   │   ├── logger.py            # Console + rotating-file logging
+│   │   └── recorder.py          # GIF Recording utility
 │   └── tools/
 │       └── inspect_twitch.py    # Standalone DOM diagnostic helper
 ├── tests/                       # pytest test cases
 │   ├── conftest.py              # `driver` fixture + failure screenshot hook
 │   └── test_twitch_search.py
+├── recordings/                  # GIF recordings (from --record flag)
+├── docs/                        # Static assets (demo.gif)
 ├── pytest.ini
 ├── requirements.txt
 └── README.md
@@ -106,6 +109,9 @@ Override the search query / device without touching the code:
 
 ```bash
 SEARCH_QUERY="League of Legends" MOBILE_DEVICE="iPhone 12 Pro" pytest
+
+# Run and record a GIF of the execution
+pytest -m wap --record
 ```
 
 ## Output artifacts
@@ -114,6 +120,7 @@ After a run you'll find:
 
 - `reports/report.html` &mdash; pytest-html report (self-contained)
 - `screenshots/` &mdash; per-test screenshots (incl. failure captures)
+- `recordings/` &mdash; GIF recordings of the test execution (when `--record` is used)
 - `logs/test_run.log` &mdash; rotating log file
 
 ## Demo
