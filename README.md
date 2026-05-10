@@ -38,6 +38,9 @@ twitch-wap-automation/
 │   └── test_twitch_search.py
 ├── recordings/                  # GIF recordings (from --record flag)
 ├── docs/                        # Static assets (demo.gif)
+├── skills/                      # Framework-specific technical insights
+│   └── selenium-pytest-mobile-web/
+│       └── SKILL.md             # Lessons captured during development
 ├── pytest.ini
 ├── requirements.txt
 └── README.md
