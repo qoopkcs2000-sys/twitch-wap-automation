@@ -108,6 +108,7 @@ class DriverFactory:
     @classmethod
     def _build_chrome_options(cls) -> Options:
         options = Options()
+        options.page_load_strategy = "eager"
 
         # NOTE: ``useAutomationExtension`` and ``excludeSwitches`` were
         # removed because Chrome 127+ rejects them with

@@ -29,18 +29,17 @@ class HomePage(BasePage):
     # ``/directory``. We try that first — it's by far the most common
     # current shape — then fall back to header variants.
     SEARCH_ICON_LOCATORS = [
-        # Current m.twitch.tv bottom-nav (most common, try first)
-        (By.CSS_SELECTOR, "a[href='/directory']"),
-        (By.CSS_SELECTOR, "a[href^='/directory']"),
+        # Explicit labels are the most reliable
         (By.CSS_SELECTOR, "a[aria-label*='Browse' i]"),
-        (By.CSS_SELECTOR, "a[aria-label*='瀏覽']"),
-        (By.XPATH, "//a[contains(@href, '/directory')]"),
-        # Header / legacy variants
-        (By.CSS_SELECTOR, "a[href='/search']"),
-        (By.CSS_SELECTOR, "a[href^='/search']"),
-        (By.CSS_SELECTOR, "button[aria-label*='Search' i]"),
         (By.CSS_SELECTOR, "a[aria-label*='Search' i]"),
+        (By.CSS_SELECTOR, "a[aria-label*='瀏覽']"),
+        (By.CSS_SELECTOR, "a[aria-label*='搜尋']"),
+        # Strict href matches
+        (By.CSS_SELECTOR, "a[href='/directory']"),
+        (By.CSS_SELECTOR, "a[href='/search']"),
+        # Fallbacks
         (By.CSS_SELECTOR, "[data-a-target='search-button']"),
+        (By.XPATH, "//a[contains(@href, '/directory') and not(contains(@href, 'following'))]"),
         (By.XPATH, "//a[contains(@href, '/search')]"),
     ]
 
@@ -76,12 +75,10 @@ class HomePage(BasePage):
 
         # Wait for the body to exist; that's enough to start interacting.
         self.find((By.TAG_NAME, "body"), timeout=Settings.DEFAULT_TIMEOUT)
-        self.logger.info("Twitch home page loaded (current_url=%s)", self.driver.current_url)
+        self.logger.info("Twitch home page reached (current_url=%s)", self.driver.current_url)
 
-        # Twitch's mobile UI is heavily client-rendered; give it a
-        # moment to settle before we start hunting elements.
-        time.sleep(3)
-        self.dismiss_app_prompt()
+        # We return immediately. dismiss_app_prompt() will be called 
+        # on-demand if it intercepts the search icon click.
         return self
 
     def dismiss_app_prompt(self) -> "HomePage":
@@ -119,34 +116,34 @@ class HomePage(BasePage):
         """Locate and click the search/browse icon to navigate to the search page.
 
         Attempts to find the search affordance using multiple known locators.
-        If none are clickable, an AssertionError is raised.
+        If a click is intercepted, it automatically attempts to dismiss 
+        the 'Open in App' prompt and retries.
         """
-        self.logger.info("Looking for the search icon")
+        self.logger.info("Looking for the search icon eagerly")
+        
+        deadline = time.monotonic() + Settings.DEFAULT_TIMEOUT
         last_exc: Exception | None = None
-        # First locator gets a generous wait (page may still be
-        # rendering); subsequent locators are short polls so we don't
-        # burn 3 seconds on every miss.
-        for i, locator in enumerate(self.SEARCH_ICON_LOCATORS):
-            timeout = 5 if i == 0 else 1
-            if not self.is_visible(locator, timeout=timeout):
-                continue
-            try:
-                element = self.find_clickable(locator, timeout=3)
-                aria = element.get_attribute("aria-label") or ""
-                title = element.get_attribute("title") or ""
-                self.logger.info(
-                    "Clicking search icon — locator=%s aria-label=%r title=%r",
-                    locator, aria, title,
-                )
-                element.click()
-                self.logger.info("Search icon clicked via %s", locator)
-                from pages.search_page import SearchPage
-                return SearchPage(self.driver)
-            except Exception as exc:
-                self.logger.warning("Failed to click %s: %s", locator, exc)
-                last_exc = exc
+        
+        while time.monotonic() < deadline:
+            for locator in self.SEARCH_ICON_LOCATORS:
+                if not self.is_visible(locator, timeout=0.5):
+                    continue
+                try:
+                    # Try to click the icon directly
+                    element = self.find_clickable(locator, timeout=1)
+                    element.click()
+                    self.logger.info("Search icon clicked via %s", locator)
+                    from pages.search_page import SearchPage
+                    return SearchPage(self.driver)
+                except Exception as exc:
+                    self.logger.debug("Click on %s failed/intercepted; checking for app prompt", locator)
+                    # If click failed, it might be the app prompt overlaying the icon
+                    self.dismiss_app_prompt()
+                    last_exc = exc
+            
+            time.sleep(0.5)
 
         raise AssertionError(
-            "Could not click any known search icon locator. "
+            f"Could not click any known search icon locator within timeout. "
             f"Last error: {last_exc}"
         )

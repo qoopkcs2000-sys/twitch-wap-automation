@@ -74,11 +74,14 @@ class SearchPage(BasePage):
 
     # ------------------------------------------------------------------
     def _find_search_input(self) -> WebElement:
+        self.logger.info("Waiting for the search input field to appear...")
         for locator in self.SEARCH_INPUT_LOCATORS:
-            if self.is_visible(locator, timeout=3):
+            # The search input on mobile can be late-binding. 
+            # We give the first locator a longer wait.
+            if self.is_visible(locator, timeout=Settings.DEFAULT_TIMEOUT):
                 self.logger.info("Search input found via %s", locator)
-                return self.find_visible(locator, timeout=3)
-        raise TimeoutException("Could not locate the search input field")
+                return self.find_visible(locator, timeout=Settings.DEFAULT_TIMEOUT)
+        raise TimeoutException("Could not locate the search input field within timeout")
 
     # ------------------------------------------------------------------
     # Locators for elements that, when clicked, commit the typed query
