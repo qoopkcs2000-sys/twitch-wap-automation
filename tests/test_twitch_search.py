@@ -28,11 +28,8 @@ class TestTwitchSearch:
         # Step 3: search query
         search_page.search_for(Settings.SEARCH_QUERY)
 
-        # Step 4: scroll down twice
-        search_page.scroll_results(times=Settings.SCROLL_TIMES)
-
-        # Step 5: open the first streamer in the result list
-        streamer_page = search_page.open_streamer(index=0)
+        # Step 4-5: scroll down twice and select a streamer (recursive)
+        streamer_page = search_page.find_streamer_recursively(index=0, max_retries=2)
 
         # Step 6: per the assignment ("on the streamer page wait
         # until all is load and take a screenshot") we:

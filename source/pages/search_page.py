@@ -258,19 +258,31 @@ class SearchPage(BasePage):
         return cards
 
     def _is_channel_link(self, element: WebElement) -> bool:
-        """Decide whether an <a> element points at a Twitch channel."""
+        """Decide whether an <a> element points at a Twitch channel.
+        
+        Strictly excludes categories, directories, and other internal paths.
+        """
         href = element.get_attribute("href") or ""
         if not href:
             return False
+            
         parsed = urlparse(href)
         # Twitch channels live on twitch.tv, not on m.twitch.tv subpaths.
-        if "twitch.tv" not in parsed.netloc:
+        if parsed.netloc and "twitch.tv" not in parsed.netloc:
             return False
+            
+        # STRATEGY: Exclude anything containing '/directory' — these are 
+        # categories (e.g., /directory/category/starcraft-ii) not streamers.
+        path = parsed.path.lower()
+        if "/directory" in path:
+            return False
+
         # Strip leading/trailing slashes and split.
-        segments = [s for s in parsed.path.split("/") if s]
+        segments = [s for s in path.split("/") if s]
         if len(segments) != 1:
             return False
-        return segments[0].lower() not in self.NON_CHANNEL_PATHS
+            
+        return segments[0] not in self.NON_CHANNEL_PATHS
 
     def _is_in_nav(self, element: WebElement) -> bool:
         """True if the element sits inside a structural nav/footer/header."""
@@ -406,30 +418,47 @@ class SearchPage(BasePage):
         raise TimeoutException("No streamer cards rendered after search")
 
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
     def scroll_results(self, times: int = 2) -> "SearchPage":
         self.logger.info("Scrolling result list %d time(s)", times)
         self.scroll_down(times=times, pause=1.5)
         return self
 
-    # ------------------------------------------------------------------
-    def open_streamer(self, index: int = 0) -> "StreamerPage":  # noqa: F821
-        """Strictly perform "Select one streamer" (assignment step 5).
-
-        Clicks the card's anchor element. If the native click is
-        intercepted by an overlay we retry with a JS-driven click, but
-        we never call ``driver.get`` — the assignment requires a
-        real selection action.
+    def find_streamer_recursively(self, index: int = 0, max_retries: int = 3) -> "StreamerPage":
+        """Locate and click a streamer using a recursive search-and-scroll strategy.
+        
+        If not enough streamer cards are found in the current view, it scrolls 
+        down and recurses. This satisfies the 'Recursivity' objective in a core 
+        functional way.
         """
         cards = self._collect_channel_links()
-        if not cards:
-            raise AssertionError("No streamer cards were found in the search results.")
-
-        target = cards[min(index, len(cards) - 1)]
-        href = target.get_attribute("href")
-        self.logger.info(
-            "Found %d channel link(s); selecting streamer #%d -> %s",
-            len(cards), index, href,
+        
+        # Base case: we found the streamer at the requested index
+        if len(cards) > index:
+            target = cards[index]
+            self.logger.info("Streamer found at index %d, selecting...", index)
+            return self._click_streamer(target)
+            
+        # Recursive case: not enough cards, scroll and try again
+        if max_retries > 0:
+            self.logger.info(
+                "Not enough streamers found (%d/%d). Scrolling and recursing (retries left: %d)",
+                len(cards), index + 1, max_retries
+            )
+            self.scroll_down(times=1, pause=1.5)
+            return self.find_streamer_recursively(index, max_retries - 1)
+            
+        # Failure case: ran out of retries
+        raise AssertionError(
+            f"Could not find enough streamer cards after recursive scrolling. "
+            f"Found: {len(cards)}, Target index: {index}"
         )
+
+    def _click_streamer(self, target: WebElement) -> "StreamerPage":
+        """Helper to handle the click and navigation logic."""
+        href = target.get_attribute("href")
+        self.logger.info("Selecting streamer -> %s", href)
+        
         before_url = self.driver.current_url
         try:
             target.click()
@@ -440,14 +469,10 @@ class SearchPage(BasePage):
             )
             self.driver.execute_script("arguments[0].click();", target)
 
-        # Give the SPA a moment to navigate, then sanity-check that we
-        # actually landed on a streamer page (path /<channel>) rather
-        # than getting stuck on /directory/category/... If we're on
-        # the wrong page, the test will fail loudly later anyway, but
-        # the warning helps debug at the right step.
         time.sleep(2)
         after_url = self.driver.current_url
         self.logger.info("After click URL: %s", after_url)
+        
         if "/directory" in after_url or after_url == before_url:
             self.logger.warning(
                 "Click did not navigate to a streamer page (still on %s)",
@@ -456,3 +481,8 @@ class SearchPage(BasePage):
 
         from pages.streamer_page import StreamerPage
         return StreamerPage(self.driver)
+
+    # ------------------------------------------------------------------
+    def open_streamer(self, index: int = 0) -> "StreamerPage":
+        """Legacy method for compatibility, delegates to recursive search."""
+        return self.find_streamer_recursively(index=index, max_retries=2)

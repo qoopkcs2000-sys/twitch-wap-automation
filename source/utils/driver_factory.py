@@ -187,8 +187,12 @@ class DriverFactory:
                 "Emulation.setTouchEmulationEnabled",
                 {"enabled": True, "maxTouchPoints": 5},
             )
+            # Extra insurance: force Twitch into mobile mode via cookie
+            driver.execute_script(
+                "document.cookie = 'tw-device-type=mobile; path=/; domain=.twitch.tv';"
+            )
             _logger.info(
-                "CDP device emulation applied (%dx%d, mobile=%s)",
+                "CDP device emulation applied (%dx%d, mobile=%s) + mobile cookie set",
                 metrics["width"], metrics["height"], metrics["mobile"],
             )
         except Exception as exc:
