@@ -44,8 +44,8 @@ class StreamerPage(BasePage):
         Twitch occasionally chains popups (cookie banner -> mature gate ->
         ad), so a single sweep is not enough. We dismiss everything we
         can see, then call ourselves again until either nothing is left
-        or ``max_depth`` runs out. The recursion satisfies the
-        assignment's "Recursivity" objective and keeps the helper
+        or ``max_depth`` runs out. This strategy handles nested or
+        chained UI components gracefully and keeps the helper
         future-proof against new overlay types.
 
         ``max_depth`` defaults to 2 — chained popups deeper than that
@@ -103,8 +103,7 @@ class StreamerPage(BasePage):
     def wait_until_loaded(self, timeout: int = 20) -> "StreamerPage":
         """Wait until *everything* on the streamer page has settled.
 
-        Per the assignment ("on the streamer page wait until all is
-        load and take a screenshot"), we enforce a chain of checks:
+        We enforce a chain of checks to ensure a clean capture:
 
           1. URL is on a streamer / channel page — NOT a category
              page (``/directory/...``) and NOT the home / search

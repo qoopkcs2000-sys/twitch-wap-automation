@@ -116,12 +116,10 @@ class HomePage(BasePage):
         return self
 
     def open_search(self) -> "SearchPage":  # noqa: F821 - forward ref
-        """Strictly perform "click in the search icon" (assignment step 2).
+        """Locate and click the search/browse icon to navigate to the search page.
 
-        We try every known locator variant for the search/browse icon
-        in turn. If none is clickable we raise — we do **not** fall
-        back to direct URL navigation, because the assignment requires
-        an explicit click on the icon.
+        Attempts to find the search affordance using multiple known locators.
+        If none are clickable, an AssertionError is raised.
         """
         self.logger.info("Looking for the search icon")
         last_exc: Exception | None = None

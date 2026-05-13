@@ -1,12 +1,12 @@
 """End-to-end test for the Twitch WAP search flow.
 
-Steps (per the assignment brief):
-    1. go to Twitch
-    2. click the search icon
-    3. input "StarCraft II"
-    4. scroll down 2 times
-    5. select one streamer
-    6. wait until the streamer page is loaded and take a screenshot
+Steps:
+    1. Go to Twitch
+    2. Click the search icon
+    3. Input "StarCraft II"
+    4. Scroll down and search for a streamer
+    5. Select one streamer
+    6. Wait until the streamer page is loaded and take a screenshot
 """
 from __future__ import annotations
 
@@ -31,13 +31,12 @@ class TestTwitchSearch:
         # Step 4-5: scroll down twice and select a streamer (recursive)
         streamer_page = search_page.find_streamer_recursively(index=0, max_retries=2)
 
-        # Step 6: per the assignment ("on the streamer page wait
-        # until all is load and take a screenshot") we:
-        #   1. dismiss any popup that's already up before we wait,
-        #   2. wait until the page is fully loaded — wait_until_loaded
-        #      itself runs another popup sweep at the end so the
-        #      capture is clean,
-        #   3. capture the screenshot.
+        # Step 6: Wait for the streamer page to fully load and capture a screenshot.
+        # Process:
+        #   1. Dismiss any existing popups/overlays.
+        #   2. Wait for video player and document readyState.
+        #   3. Perform a final popup sweep for late-binding overlays.
+        #   4. Capture the screenshot.
         screenshot_path = (
             streamer_page
             .dismiss_popups()       # initial sweep
@@ -45,7 +44,7 @@ class TestTwitchSearch:
             .capture("starcraft_streamer")
         )
 
-        # Sanity assertions on the deliverable.
+        # Sanity assertions on the output artifacts.
         assert screenshot_path.exists(), "Screenshot should be written to disk"
         assert screenshot_path.stat().st_size > 0, "Screenshot should not be empty"
         # And we should NOT have screenshotted a directory page.

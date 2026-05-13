@@ -99,15 +99,12 @@ class SearchPage(BasePage):
     ]
 
     def search_for(self, query: str) -> "SearchPage":
-        """Strictly perform "input <query>" (assignment step 3).
+        """Type the query into the search field and commit it via UI interaction.
 
-        Types the query into the search field and commits it via UI
-        only — no ``driver.get`` shortcut. The commit attempt order:
+        Attempted commit order:
             1. Press Enter (works on the dedicated /search page)
             2. ``element.submit()`` (W3C form submit)
             3. Click an autocomplete suggestion (mobile)
-        We never silently navigate behind the user's back; if every
-        commit path fails we raise so the test reports honestly.
         """
         self.logger.info("Searching for: %s", query)
         element = self._find_search_input()

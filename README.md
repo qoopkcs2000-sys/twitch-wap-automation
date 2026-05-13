@@ -1,7 +1,7 @@
 # twitch-wap-automation
 
-Selenium + pytest framework for the **Home Test - AQA** assignment.
-Runs against Twitch's mobile web (WAP) using Chrome's mobile emulator.
+Selenium + pytest framework for Twitch mobile web (WAP) automation.
+Runs against the mobile site using Chrome's mobile emulation and CDP-based stealth.
 
 ## Test scenario
 
@@ -56,10 +56,9 @@ twitch-wap-automation/
 - **`utils/driver_factory.py`** is the only place that knows how to build a
   browser. Switching to Firefox, a Selenium Grid, or BrowserStack later is
   a one-file change.
-- **Recursive popup handling** in `StreamerPage.dismiss_popups` deals
   with chained overlays (cookie banner → mature gate → ad close button)
   by sweeping all known dismissable elements and recursing while
-  anything was clicked. This satisfies the *Recursivity* requirement.
+  anything was clicked. This ensures a clean state before interaction.
 - **Failure screenshots** are taken automatically by the conftest hook so
   CI runs always have visual evidence.
 - **Resilient locators** use fallback lists to survive minor UI changes.
