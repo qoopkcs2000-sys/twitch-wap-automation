@@ -55,6 +55,15 @@ class HomePage(BasePage):
         # carry on as long as the document body is present.
         try:
             self.open(self.URL)
+            # Extra insurance: force Twitch into mobile mode via cookie
+            # Must be set AFTER opening the domain.
+            try:
+                self.driver.execute_script(
+                    "document.cookie = 'tw-device-type=mobile; path=/; domain=.twitch.tv';"
+                )
+                self.logger.info("Mobile device cookie injected")
+            except Exception as e:
+                self.logger.warning("Could not inject mobile cookie: %s", e)
         except (TimeoutException, WebDriverException) as exc:
             self.logger.warning(
                 "driver.get() timed out (%s) — aborting pending requests "
