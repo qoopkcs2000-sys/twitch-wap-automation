@@ -48,3 +48,6 @@ allure-report/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Assignment files
+HQA_Home_test-auto.pdf
